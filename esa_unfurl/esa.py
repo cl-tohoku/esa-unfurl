@@ -47,4 +47,6 @@ class EsaPage:
             "title_link": self.url,
             "color": "#0a9b94",
             "text": truncate_text(self.text),
+            "footer_icon": "esa",
+            "footer": "https://assets.esa.io/assets/favicon-645bbf85cffa3c60eda21ee9cf63ff12d6f41814353dd3d4ce1a10479d795d71.ico",
         }
