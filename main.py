@@ -1,5 +1,4 @@
 import requests
-from dotenv import load_dotenv
 from sanic import Sanic
 from sanic import response
 from sanic.log import logger
@@ -7,8 +6,7 @@ from sanic.request import Request
 
 from esa_unfurl.esa import EsaPage
 
-load_dotenv()
-app = Sanic()
+app = Sanic("esa-unfurl")
 
 
 @app.post("/")
@@ -47,4 +45,4 @@ async def test(request):
 
 
 if __name__ == "__main__":
-    app.run(debut=True)
+    app.run(host="0.0.0.0", port=8000)
