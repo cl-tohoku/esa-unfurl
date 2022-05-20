@@ -1,48 +1,29 @@
+import json
+import os
+
 import requests
-from sanic import Sanic
-from sanic import response
-from sanic.log import logger
-from sanic.request import Request
 
 from esa_unfurl.esa import EsaPage
 
-app = Sanic("esa-unfurl")
 
+def main(event, context):
+    if "body" in event.keys():
+        body = json.loads(event["body"])
+        if "challenge" in body.keys():
+            return body["challenge"]
+        else:
+            unfurls = dict()
 
-@app.post("/")
-async def root(request: Request):
-    j = request.json
-    logger.debug(j)
+            for link in body["event"]["links"]:
+                ep = EsaPage.request(link["url"], os.environ["ESA_TOKEN"])
+                unfurls[ep.url] = ep.to_attachment()
 
-    if j["type"] == "url_verification":
-        return response.text(j["challenge"])
-
-    else:
-        unfurls = dict()
-        for link in j["event"]["links"]:
-            ep = EsaPage.request(link["url"], app.config.ESA_TOKEN)
-            unfurls[ep.url] = ep.to_attachment()
-
-        headers = {"Authorization": f"Bearer {app.config.SLACK_TOKEN}"}
-        payload = {
-            "token": app.config.SLACK_TOKEN,
-            "channel": j["event"]["channel"],
-            "ts": j["event"]["message_ts"],
-            "unfurls": unfurls,
-        }
-        logger.debug(payload)
-        r = requests.post(
-            "https://slack.com/api/chat.unfurl", json=payload, headers=headers
-        )
-        logger.debug(r.json())
-
-    return response.text("")
-
-
-@app.get("/")
-async def test(request):
-    return response.json({"hello": "world"})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+            headers = {"Authorization": f"Bearer {os.environ['SLACK_TOKEN']}"}
+            payload = {
+                "token": os.environ["SLACK_TOKEN"],
+                "channel": body["event"]["channel"],
+                "ts": body["event"]["message_ts"],
+                "unfurls": unfurls,
+            }
+            r = requests.post("https://slack.com/api/chat.unfurl", json=payload, headers=headers)
+    return ""
